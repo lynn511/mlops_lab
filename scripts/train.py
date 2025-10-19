@@ -4,16 +4,16 @@ import argparse
 from pathlib import Path
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline
+from sklearn.ensemble import RandomForestClassifier
 
 # -------------------------------
 # Load Data
 # -------------------------------
-def load_data(train_path):
-    train = pd.read_csv(train_path)
-    if 'Survived' not in train.columns:
-        raise ValueError("Training data must contain 'Survived' column as target")
-    X = train.drop(columns=['Survived'])
-    y = train['Survived']
+def load_data(x_train_path, y_train_path):
+    X = pd.read_csv(x_train_path)
+    y = pd.read_csv(y_train_path).squeeze()  # squeeze() converts single column DF to Series
+    if y.name != 'Survived':
+        y.name = 'Survived'
     return X, y
 
 # -------------------------------
@@ -51,22 +51,24 @@ def save_pipeline(pipeline, output_path):
 # Main
 # -------------------------------
 def main():
-    parser = argparse.ArgumentParser(description="Train Titanic model with LinearSVC and saved transformers")
-    parser.add_argument("--train_path", type=str, required=True, help="Path to featurized training CSV file")
-    parser.add_argument("--transformer_dir", type=str, required=True, help="Directory where transformers are saved")
+    parser = argparse.ArgumentParser(description="Train Titanic model with saved transformers")
+    parser.add_argument("--x_train_path", type=str, default="data/train/X_train.csv", help="Path to X_train CSV file")
+    parser.add_argument("--y_train_path", type=str, default="data/train/y_train.csv", help="Path to y_train CSV file")
+    parser.add_argument("--transformer_dir", type=str, default="data/transformers", help="Directory where transformers are saved")
     parser.add_argument("--output_model", type=str, default="models/linear_svc_pipeline.pkl", help="Path to save trained pipeline")
     args = parser.parse_args()
 
     print("📥 Loading training data...")
-    X_train, y_train = load_data(args.train_path)
-    print(f"Training data shape: {X_train.shape}")
+    X_train, y_train = load_data(args.x_train_path, args.y_train_path)
+    print(f"Training data shape: {X_train.shape}, Target shape: {y_train.shape}")
 
     print("⚙️ Loading saved transformers...")
     num_cat_trans, bins_trans = load_transformers(args.transformer_dir)
 
-    print("🤖 Creating pipeline with LinearSVC...")
-    svc_model = LinearSVC(max_iter=10000, random_state=42)
-    pipeline = create_pipeline(svc_model, num_cat_trans, bins_trans)
+    # 👇 You can toggle between models here
+    #svc_model = LinearSVC(max_iter=10000, random_state=42)
+    rf_model = RandomForestClassifier(n_estimators=300, random_state=42)
+    pipeline = create_pipeline(rf_model, num_cat_trans, bins_trans)
 
     print("🚀 Fitting pipeline on training data...")
     pipeline.fit(X_train, y_train)
@@ -79,3 +81,8 @@ def main():
 if __name__ == "__main__":
     main()
 
+"""python scripts/train.py \    
+  --x_train_path data/train/X_train.csv \
+  --y_train_path data/train/y_train.csv \
+  --transformer_dir data/transformers \
+  --output_model models/random_forest_pipeline.pkl"""

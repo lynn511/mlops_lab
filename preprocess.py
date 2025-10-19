@@ -32,7 +32,7 @@ def clean_data(train, test):
 
     # Create unified dataframe for easier manipulation
     df = pd.concat([train, test], sort=True).reset_index(drop=True)
-    df.corr(numeric_only=True)["Age"].abs()
+    df.corr(numeric_only=True)["Age"].abs()  # ask question
     # Fill missing Age values using group median
     df["Age"] = df.groupby(["Sex", "Pclass"])["Age"].transform(
         lambda x: x.fillna(x.median())
@@ -106,3 +106,11 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+"""python scripts/preprocess.py \
+  --train_path data/titanic/train.csv \
+  --test_path data/titanic/test.csv \
+  --output_train data/processed/train_processed.csv \
+  --output_test data/processed/test_processed.csv
+"""
