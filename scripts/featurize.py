@@ -31,11 +31,6 @@ def create_family_size(df):
     df['Family_size'] = df['Family_size'].apply(family_size_bin)
     return df
 
-def create_fare_per_person(df):
-    # avoid division by zero
-    df['FarePerPerson'] = df['Fare'] / (df['SibSp'] + df['Parch'] + 1)
-    return df
-
 
 def drop_unused_columns(df):
     df.drop(columns=['Name','Parch','SibSp','Ticket','PassengerId'], inplace=True)
@@ -47,7 +42,7 @@ def drop_unused_columns(df):
 
 def build_feature_pipelines():
     num_cat_transformation = ColumnTransformer([
-        ('scaling', MinMaxScaler(), [0, 2, 7]),
+        ('scaling', MinMaxScaler(), [0, 2]),
         ('onehotencoding1', OneHotEncoder(), [1, 3]),
         ('ordinal', OrdinalEncoder(), [4]),
         ('onehotencoding2', OneHotEncoder(), [5, 6])
@@ -59,7 +54,7 @@ def build_feature_pipelines():
             encode='ordinal',
             strategy='quantile',
             quantile_method='averaged_inverted_cdf'
-        ), [0, 2, 7])
+        ), [0, 2])
     ], remainder='passthrough')
 
     return num_cat_transformation, bins
@@ -82,7 +77,6 @@ def fit_and_save_transformers(X_train, num_cat_transformation, bins, output_dir=
 def apply_feature_engineering(df):
     df = extract_title(df)
     df = create_family_size(df)
-    df = create_fare_per_person(df)   # 👈 Add this line here
     df = drop_unused_columns(df)
     return df
 
