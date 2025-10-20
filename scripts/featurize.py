@@ -31,6 +31,14 @@ def create_family_size(df):
     df['Family_size'] = df['Family_size'].apply(family_size_bin)
     return df
 
+def create_fare_group(df):
+    df['FareGroup'] = pd.cut(
+        df['Fare'],
+        bins=[0, 10, 50, 100, 600],
+        labels=['Low', 'Mid', 'High', 'Very High']
+    )
+    return df
+
 
 def drop_unused_columns(df):
     df.drop(columns=['Name','Parch','SibSp','Ticket','PassengerId'], inplace=True)
@@ -45,7 +53,7 @@ def build_feature_pipelines():
         ('scaling', MinMaxScaler(), [0, 2]),
         ('onehotencoding1', OneHotEncoder(), [1, 3]),
         ('ordinal', OrdinalEncoder(), [4]),
-        ('onehotencoding2', OneHotEncoder(), [5, 6])
+        ('onehotencoding2', OneHotEncoder(), [5, 6, 7])
     ], remainder='passthrough')
 
     bins = ColumnTransformer([
@@ -77,6 +85,7 @@ def fit_and_save_transformers(X_train, num_cat_transformation, bins, output_dir=
 def apply_feature_engineering(df):
     df = extract_title(df)
     df = create_family_size(df)
+    df = create_fare_group(df)   # 👈 added
     df = drop_unused_columns(df)
     return df
 
