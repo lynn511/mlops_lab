@@ -1022,7 +1022,7 @@ wheels = [
 ]
 
 [[package]]
-name = "mlops-2025"
+name = "mlops-lab"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
