@@ -1,13 +1,11 @@
-"""
-Preprocessor class for Titanic dataset.
-Handles loading, cleaning, and splitting data.
-"""
-
 import pandas as pd
 from pathlib import Path
+from .base_preprocessor import BasePreprocessor
 
 
-class Preprocessor:
+class Preprocessor(BasePreprocessor):
+    """Preprocessor class for Titanic dataset."""
+
     def __init__(self, train_path: str, test_path: str):
         self.train_path = Path(train_path)
         self.test_path = Path(test_path)
@@ -16,13 +14,11 @@ class Preprocessor:
         self.df = None
 
     def load_data(self):
-        """Load training and test CSVs."""
         self.train = pd.read_csv(self.train_path)
         self.test = pd.read_csv(self.test_path)
         return self.train, self.test
 
     def clean_data(self):
-        """Clean and combine train/test data."""
         train, test = self.train.copy(), self.test.copy()
         train.drop(columns=["Cabin"], inplace=True, errors="ignore")
         test.drop(columns=["Cabin"], inplace=True, errors="ignore")
@@ -38,15 +34,18 @@ class Preprocessor:
         return df
 
     def split_data(self):
-        """Split unified dataframe back into train/test sets."""
         df = self.df.copy()
         train = df.loc[:890].copy()
         test = df.loc[891:].copy()
-
         if "Survived" in test.columns:
             test.drop(columns=["Survived"], inplace=True)
         if "Survived" in train.columns:
             train["Survived"] = train["Survived"].astype("int64")
-
         self.train, self.test = train, test
         return train, test
+
+    def process(self, df: pd.DataFrame = None):
+        """Implements the BasePreprocessor interface."""
+        self.load_data()
+        self.clean_data()
+        return self.split_data()
