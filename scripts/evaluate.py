@@ -1,79 +1,68 @@
-# evaluate.py
+
+# scripts/evaluate.py
 import argparse
-import pickle
 from pathlib import Path
 import json
-
 import pandas as pd
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import pickle
 
-
-def load_model(model_path: Path):
-    """Load trained pipeline from pickle file."""
-    with open(model_path, "rb") as f:
-        model = pickle.load(f)
-    return model
-
-
+from mlops_lab.models.logistic_reg import LogisticRegressionModel
+import sys
+# ----------------------------
+# Helper functions
+# ----------------------------
 def load_eval_data(X_path: Path, y_path: Path):
-    """Load evaluation features and labels from separate CSV files."""
     X = pd.read_csv(X_path)
-    y = pd.read_csv(y_path).squeeze()  # convert single-column DF to Series
+    y = pd.read_csv(y_path).squeeze()
     return X, y
 
+def load_model(model_path: Path) -> LogisticRegressionModel:
+    """Load the trained pipeline and wrap it in LogisticRegressionModel."""
+    with open(model_path, "rb") as f:
+        pipeline = pickle.load(f)
 
-def evaluate(model, X, y):
-    """Compute evaluation metrics."""
-    y_pred = model.predict(X)
-    acc = accuracy_score(y, y_pred)
-    clf_report = classification_report(y, y_pred, output_dict=True)
-    conf_mat = confusion_matrix(y, y_pred).tolist()
-    return {
-        "accuracy": acc,
-        "classification_report": clf_report,
-        "confusion_matrix": conf_mat,
-        "n_samples": int(len(y))
-    }
-
+    # Create a dummy model instance and attach the loaded pipeline
+    model = LogisticRegressionModel(num_cat_trans=None, bins_trans=None, output_path=model_path)
+    model.pipeline = pipeline
+    return model
 
 def main():
-    parser = argparse.ArgumentParser(description="Evaluate trained model on an evaluation dataset")
-    parser.add_argument("--model_path", type=str, required=True, help="Path to saved model (pickle)")
-    parser.add_argument("--X_path", type=str, required=True, help="Path to evaluation features CSV (X_val.csv)")
-    parser.add_argument("--y_path", type=str, required=True, help="Path to evaluation labels CSV (y_val.csv)")
-    parser.add_argument("--output_json", type=str, default=None, help="Optional path to save metrics as JSON")
+    parser = argparse.ArgumentParser(description="Evaluate trained model")
+    parser.add_argument("--model_path", type=str, required=True)
+    parser.add_argument("--X_path", type=str, required=True)
+    parser.add_argument("--y_path", type=str, required=True)
+    parser.add_argument("--output_json", type=str, default=None)
     args = parser.parse_args()
 
-    model_path = Path(args.model_path)
-    X_path = Path(args.X_path)
-    y_path = Path(args.y_path)
+    X_eval, y_eval = load_eval_data(Path(args.X_path), Path(args.y_path))
 
-    print(f"Loading model from: {model_path}")
-    model = load_model(model_path)
-
-    print(f"Loading evaluation data from: {X_path} and {y_path}")
-    X_eval, y_eval = load_eval_data(X_path, y_path)
+    print(f"Loading model from: {args.model_path}")
+    model = load_model(Path(args.model_path))
 
     print("Running evaluation...")
-    metrics = evaluate(model, X_eval, y_eval)
+    accuracy = model.evaluate(X_eval, y_eval)
+    y_pred = model.predict(X_eval)
 
-    # Print summary
-    print(f"\nAccuracy: {metrics['accuracy']:.4f}\n")
-    print("Classification report:\n")
-    print(classification_report(y_eval, model.predict(X_eval)))
+    from sklearn.metrics import classification_report, confusion_matrix
 
-    print("Confusion matrix:")
-    print(pd.DataFrame(metrics["confusion_matrix"], index=["true_0", "true_1"], columns=["pred_0", "pred_1"]))
-    print(f"\nNumber of evaluation samples: {metrics['n_samples']}")
+    metrics = {
+        "accuracy": accuracy,
+        "classification_report": classification_report(y_eval, y_pred, output_dict=True),
+        "confusion_matrix": confusion_matrix(y_eval, y_pred).tolist(),
+        "n_samples": int(len(y_eval))
+    }
 
-    # Optionally save metrics as JSON
+    print(f"\nAccuracy: {metrics['accuracy']:.4f}")
+    print("Classification report:\n", classification_report(y_eval, y_pred))
+    print("Confusion matrix:\n", pd.DataFrame(metrics["confusion_matrix"], index=["true_0","true_1"], columns=["pred_0","pred_1"]))
+    print(f"Number of evaluation samples: {metrics['n_samples']}")
+
     if args.output_json:
         out_path = Path(args.output_json)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         with open(out_path, "w", encoding="utf-8") as f:
             json.dump(metrics, f, indent=2)
         print(f"\nMetrics saved to: {out_path}")
-
 
 if __name__ == "__main__":
     main()
