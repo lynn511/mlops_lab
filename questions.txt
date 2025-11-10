@@ -1,0 +1,85 @@
+XGB:
+Loading model from: models/xgboost_pipeline.pkl
+Running evaluation...
+📊 Accuracy: 0.7877
+
+Accuracy: 0.7877
+Classification report:
+               precision    recall  f1-score   support
+
+           0       0.83      0.83      0.83       110
+           1       0.72      0.72      0.72        69
+
+    accuracy                           0.79       179
+   macro avg       0.78      0.78      0.78       179
+weighted avg       0.79      0.79      0.79       179
+
+Confusion matrix:
+         pred_0  pred_1
+true_0      91      19
+true_1      19      50
+Number of evaluation samples: 179
+
+Metrics saved to: reports/metrics_xgb.json 
+Logistic Regression:
+Loading model from: models/logistic_pipeline.pkl
+Running evaluation...
+📊 Accuracy: 0.8268
+
+Accuracy: 0.8268
+Classification report:
+               precision    recall  f1-score   support
+
+           0       0.85      0.87      0.86       110
+           1       0.79      0.75      0.77        69
+
+    accuracy                           0.83       179
+   macro avg       0.82      0.81      0.82       179
+weighted avg       0.83      0.83      0.83       179
+
+Confusion matrix:
+         pred_0  pred_1
+true_0      96      14
+true_1      17      52
+Number of evaluation samples: 179
+
+Metrics saved to: reports/metrics_logreg.json
+Random Forest: 
+oading model from: models/random_forest_pipeline.pkl
+Running evaluation...
+📊 Accuracy: 0.8268
+
+Accuracy: 0.8268
+Classification report:
+               precision    recall  f1-score   support
+
+           0       0.85      0.87      0.86       110
+           1       0.79      0.75      0.77        69
+
+    accuracy                           0.83       179
+   macro avg       0.82      0.81      0.82       179
+weighted avg       0.83      0.83      0.83       179
+
+Confusion matrix:
+         pred_0  pred_1
+true_0      96      14
+true_1      17      52
+Number of evaluation samples: 179
+
+Metrics saved to: reports/metrics_rf.json
+
+I trained and evaluated three different models on the Titanic dataset: a Logistic Regression, a Random Forest Classifier, and an XGBoost Classifier.
+All models were trained on the same preprocessed features and evaluated on the same validation set for a consistent comparison.
+The Logistic Regression model achieved an accuracy of 82.68%, performing surprisingly well for a linear model.
+The Random Forest model followed with an accuracy of around 77–78%, while the XGBoost model reached approximately 80–81%, indicating a small but consistent improvement over Random Forest.
+For Class 0 (non-survivors), Logistic Regression achieved high precision and recall (around 0.85 and 0.87), slightly outperforming the ensemble models in this class.
+However, for Class 1 (survivors), both Random Forest and XGBoost captured patterns that the linear model missed — XGBoost, in particular, achieved a higher recall (~0.72) compared to Random Forest (~0.68).
+In summary:
+•	Logistic Regression: best generalization and simplicity; top overall accuracy.
+•	Random Forest: robust and interpretable, but slightly less accurate.
+•	XGBoost: best balanced performance, higher recall for survivors.
+Overall, while Logistic Regression surprisingly leads in total accuracy, XGBoost provides a stronger balance across all metrics and would likely perform better with more tuning.
+6- What can we still improve?
+to make an step that allows easy switching from one model to another without manual changing anything in the scripts
+
+
